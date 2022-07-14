@@ -24,7 +24,7 @@ const getContent = async ({ contentType, failPlugin }) => {
     // Retrieve the content using the set API endpoint
     const content = await contentType.browse({
       include: "tags,authors",
-      limit: "all"
+      limit: "all",
     });
 
     // Return content
@@ -116,6 +116,8 @@ const createMarkdownContent = ({ content, imagesPath, assetsDir, layout }) => {
 
   // Format tags into a comma separated string
   const formatTags = (tags) => {
+    console.log(tags);
+    if (tags.length === 0) return null;
     if (tags) {
       return `[${tags.map((tag) => `\"${tag.name}\"`).join(", ")}]`;
     }
@@ -134,7 +136,7 @@ const createMarkdownContent = ({ content, imagesPath, assetsDir, layout }) => {
         ? formatImagePaths({
             string: content.feature_image,
             imagesPath,
-            assetsDir
+            assetsDir,
           })
         : ""
     }"
@@ -145,7 +147,7 @@ const createMarkdownContent = ({ content, imagesPath, assetsDir, layout }) => {
         ? formatImagePaths({
             string: content.html,
             imagesPath,
-            assetsDir
+            assetsDir,
           })
         : ""
     }
@@ -174,7 +176,7 @@ const createTagMarkdown = ({ content, imagesPath, assetsDir, layout }) => {
         ? formatImagePaths({
             string: content.feature_image,
             imagesPath,
-            assetsDir
+            assetsDir,
           })
         : ""
     }"
@@ -205,7 +207,7 @@ const createAuthorMarkdown = ({ content, imagesPath, assetsDir, layout }) => {
         ? formatImagePaths({
             string: content.cover_image,
             imagesPath,
-            assetsDir
+            assetsDir,
           })
         : ""
     }"
@@ -277,21 +279,21 @@ const getCacheTimestamp = async ({ cache, fullFilePath, failPlugin }) => {
     await cache.restore(fullFilePath);
     const cacheDate = await readFile({
       file: fullFilePath,
-      failPlugin: failPlugin
+      failPlugin: failPlugin,
     });
 
     // Log cache timestamp in console
     log({
       color: yellow,
       label: "Restoring markdown cache from",
-      value: cacheDate
+      value: cacheDate,
     });
     return new Date(cacheDate);
   } else {
     // Log no cache file found
     log({
       color: yellow,
-      label: "No cache file found"
+      label: "No cache file found",
     });
     return 0;
   }
@@ -312,7 +314,7 @@ const writeCacheTimestamp = async ({ cache, fullFilePath, failPlugin }) => {
   await writeFile({
     fullFilePath: fullFilePath,
     content: `"${nowISO}"`,
-    failPlugin: failPlugin
+    failPlugin: failPlugin,
   });
 
   await cache.save(fullFilePath);
@@ -321,7 +323,7 @@ const writeCacheTimestamp = async ({ cache, fullFilePath, failPlugin }) => {
   log({
     color: yellow,
     label: "Caching markdown at",
-    value: nowISO
+    value: nowISO,
   });
 };
 
@@ -370,7 +372,7 @@ const getAllImages = ({ contentItems, imagesPath }) => {
     .map((item) => item.cover_image);
 
   const allImages = [
-    ...new Set([...htmlImages, ...featureImages, ...coverImages])
+    ...new Set([...htmlImages, ...featureImages, ...coverImages]),
   ];
 
   return allImages;
@@ -394,12 +396,12 @@ module.exports = {
       tagsLayout = "tag",
       authorsLayout = "author",
       postDatePrefix = true,
-      cacheFile = "./_data/ghostMarkdownCache.json"
+      cacheFile = "./_data/ghostMarkdownCache.json",
     },
     utils: {
       build: { failPlugin },
-      cache
-    }
+      cache,
+    },
   }) => {
     // Ghost images path
     const ghostImagePath = ghostURL + "/content/images/";
@@ -408,35 +410,35 @@ module.exports = {
     const api = new ghostContentAPI({
       url: ghostURL,
       key: ghostKey,
-      version: "v2"
+      version: "v2",
     });
 
     const [posts, pages, cacheDate, tags, authors] = await Promise.all([
       getContent({
         contentType: api.posts,
-        failPlugin: failPlugin
+        failPlugin: failPlugin,
       }),
       getContent({
         contentType: api.pages,
-        failPlugin: failPlugin
+        failPlugin: failPlugin,
       }),
       getCacheTimestamp({
         cache: cache,
         fullFilePath: cacheFile,
-        failPlugin: failPlugin
+        failPlugin: failPlugin,
       }),
       tagPages
         ? getContent({
             contentType: api.tags,
-            failPlugin: failPlugin
+            failPlugin: failPlugin,
           })
         : [],
       authorPages
         ? getContent({
             contentType: api.authors,
-            failPlugin: failPlugin
+            failPlugin: failPlugin,
           })
-        : []
+        : [],
     ]);
 
     await Promise.all([
@@ -446,9 +448,9 @@ module.exports = {
           ...posts,
           ...pages,
           ...(tagPages ? tags : []),
-          ...(authorPages ? authors : [])
+          ...(authorPages ? authors : []),
         ],
-        imagesPath: ghostImagePath
+        imagesPath: ghostImagePath,
       }).map(async (image) => {
         // Create destination for each image
         const dest = image.replace(ghostImagePath, assetsDir);
@@ -458,7 +460,7 @@ module.exports = {
           await downloadImage({
             imagePath: image,
             outputPath: dest,
-            failPlugin: failPlugin
+            failPlugin: failPlugin,
           });
 
           // Cache the image
@@ -467,7 +469,7 @@ module.exports = {
           log({
             color: green,
             label: "Downloaded and cached",
-            value: dest
+            value: dest,
           });
         } else {
           // Restore the image if it's already in the cache
@@ -476,7 +478,7 @@ module.exports = {
           log({
             color: cyan,
             label: "Restored from cache",
-            value: dest
+            value: dest,
           });
         }
       }),
@@ -502,7 +504,7 @@ module.exports = {
           log({
             color: cyan,
             label: "Restored from cache",
-            value: fullFilePath
+            value: fullFilePath,
           });
         } else {
           // Generate markdown file
@@ -513,10 +515,10 @@ module.exports = {
               imagesPath: ghostImagePath,
               assetsDir: getRelativeImagePath({
                 imagePath: assetsDir,
-                contentPath: postsDir
+                contentPath: postsDir,
               }),
-              layout: postsLayout
-            })
+              layout: postsLayout,
+            }),
           });
           // Cache the markdown file
           await cache.save(fullFilePath);
@@ -524,7 +526,7 @@ module.exports = {
           log({
             color: green,
             label: "Generated and cached",
-            value: fullFilePath
+            value: fullFilePath,
           });
         }
       }),
@@ -545,7 +547,7 @@ module.exports = {
           log({
             color: cyan,
             label: "Restored from cache",
-            value: fullFilePath
+            value: fullFilePath,
           });
         } else {
           // Generate markdown file
@@ -556,10 +558,10 @@ module.exports = {
               imagesPath: ghostImagePath,
               assetsDir: getRelativeImagePath({
                 imagePath: assetsDir,
-                contentPath: pagesDir
+                contentPath: pagesDir,
               }),
-              layout: pagesLayout
-            })
+              layout: pagesLayout,
+            }),
           });
           // Cache the markdown file
           await cache.save(fullFilePath);
@@ -567,7 +569,7 @@ module.exports = {
           log({
             color: green,
             label: "Generated and cached",
-            value: fullFilePath
+            value: fullFilePath,
           });
         }
       }),
@@ -582,7 +584,7 @@ module.exports = {
             tag.html = createTaxonomyContent({
               taxonomyItem: tag,
               items: taggedItems,
-              postDatePrefix
+              postDatePrefix,
             });
 
             // Set the file name using the page slug
@@ -599,10 +601,10 @@ module.exports = {
                 imagesPath: ghostImagePath,
                 assetsDir: getRelativeImagePath({
                   imagePath: assetsDir,
-                  contentPath: tagsDir
+                  contentPath: tagsDir,
                 }),
-                layout: tagsLayout
-              })
+                layout: tagsLayout,
+              }),
             });
           })
         : []),
@@ -619,7 +621,7 @@ module.exports = {
             author.html = createTaxonomyContent({
               taxonomyItem: author,
               items: authoredItems,
-              postDatePrefix
+              postDatePrefix,
             });
 
             // Set the file name using the page slug
@@ -636,20 +638,20 @@ module.exports = {
                 imagesPath: ghostImagePath,
                 assetsDir: getRelativeImagePath({
                   imagePath: assetsDir,
-                  contentPath: authorsDir
+                  contentPath: authorsDir,
                 }),
-                layout: authorsLayout
-              })
+                layout: authorsLayout,
+              }),
             });
           })
-        : [])
+        : []),
     ]).then(async (response) => {
       // Write a new cache file
       await writeCacheTimestamp({
         cache: cache,
         fullFilePath: cacheFile,
-        failPlugin: failPlugin
+        failPlugin: failPlugin,
       });
     });
-  }
+  },
 };
